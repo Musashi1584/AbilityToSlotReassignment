@@ -14,7 +14,7 @@ var config array<name> MeleeWeaponTemplateBlacklist;
 var config array<name> MeleeWeaponCategoryBlacklist;
 var config array<name> PistolWeaponTemplateBlacklist;
 var config array<name> PistolWeaponCategoryBlacklist;
-
+var config array<name> AkimboWeaponCategoryBlacklist;
 
 static function bool HasPrimaryMeleeOrPistolEquipped(XComGameState_Unit UnitState, optional XComGameState CheckGameState)
 {
@@ -125,6 +125,8 @@ static function bool HasDualPistolEquipped(XComGameState_Unit UnitState, optiona
 
 		return PrimaryTemplate != none && SecondaryTemplate != none && 
 				IsPrimaryPistolItem(PrimaryWeapon) && IsSecondaryPistolItem(SecondaryWeapon) &&
+				default.AkimboWeaponCategoryBlacklist.Find(PrimaryTemplate.WeaponCat) == INDEX_NONE &&
+				default.AkimboWeaponCategoryBlacklist.Find(SecondaryTemplate.WeaponCat) == INDEX_NONE &&
 				PrimaryTemplate.WeaponCat == SecondaryTemplate.WeaponCat; // can dual wield guns only with the same WeaponCat
 	}
 
