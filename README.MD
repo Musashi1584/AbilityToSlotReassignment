@@ -16,7 +16,7 @@ So it will be irrelvant what slot is defined in the XComClassData.ini of the sol
 AbilityType=(AbilityName="PistolStandardShot",  ApplyToWeaponSlot=eInvSlot_SecondaryWeapon))
 ```
 usually means PistolStandardShot will only work for secondary pistols.
-With the config above it doesnt matter if the pistol is in the primary, secondary, utitilty or dedicated pistol slot.
+With the config above it doesnt matter if the pistol is in the primary, secondary, utility or dedicated pistol slot.
 
 
 ### Loadout API
@@ -24,8 +24,6 @@ Another feature of the mod is the loadout api. Its only interesting for modder a
 to detect different loadouts like e.g primary pistol or dual wield melee.
 
 ```cs
-interface LoadoutApiInterface;
-
 static function bool HasPrimaryMeleeOrPistolEquipped(XComGameState_Unit UnitState, optional XComGameState CheckGameState);
 static function bool HasMeleeAndPistolEquipped(XComGameState_Unit UnitState, optional XComGameState CheckGameState);
 static function bool HasPrimaryMeleeEquipped(XComGameState_Unit UnitState, optional XComGameState CheckGameState);
@@ -42,7 +40,8 @@ static function bool IsSecondaryMeleeItem(XComGameState_Item ItemState, optional
 static function bool IsPistolItem(XComGameState_Item ItemState, optional EInventorySlot InventorySlot = eInvSlot_SecondaryWeapon, optional bool bUseTemplateForSlotCheck = false);
 static function bool IsMeleeItem(XComGameState_Item ItemState, optional EInventorySlot InventorySlot = eInvSlot_SecondaryWeapon, optional bool bUseTemplateForSlotCheck = false);
 static function bool IsMeleeWeaponTemplate(X2WeaponTemplate WeaponTemplate);
-static function bool IsPistolWeaponTemplate(X2WeaponTemplate WeaponTemplate);```
+static function bool IsPistolWeaponTemplate(X2WeaponTemplate WeaponTemplate);
+```
 
 #### Client side usage
 Add the `LoadoutApi_1_0_0` package of this mod to the mod you want to use the api in.
