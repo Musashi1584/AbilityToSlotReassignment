@@ -57,3 +57,5 @@ then you can use the api functions e.g like
 ```cs
 bHasDualPistolsEquipped = class'LoadoutApiFactory'.static.GetLoadoutApi().HasDualPistolEquipped(UnitState);
 ```
+
+*Important! this will only work if the AbilityToSlotReassignment mod is activated on the users end*
