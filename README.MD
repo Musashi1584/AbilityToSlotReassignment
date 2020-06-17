@@ -22,7 +22,7 @@ With the config above it doesnt matter if the pistol is in the primary, secondar
 ### Loadout API
 Another feature of the mod is the loadout api. Its only interesting for modder as it offers an API
 to detect different loadouts like e.g primary pistol or dual wield melee.
-This is an attempt to unifiy the different methods of detecting loading in various mods and provide a single source of truth.
+This is an attempt to unify the different methods of detecting loadouts in various mods and provide a single source of truth.
 
 ```cs
 static function bool HasPrimaryMeleeOrPistolEquipped(XComGameState_Unit UnitState, optional XComGameState CheckGameState);
