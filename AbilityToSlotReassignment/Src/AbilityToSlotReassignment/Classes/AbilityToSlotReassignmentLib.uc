@@ -12,6 +12,7 @@ struct AbilityWeaponCategory
 };
 
 var config array<AbilityWeaponCategory> AbilityWeaponCategories;
+var config array<AbilityWeaponCategory> MandatoryAbilities;
 
 static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
 {
@@ -21,9 +22,54 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local XComGameState_Item InventoryItem;
 	local StateObjectReference ItemRef;
 	local array<StateObjectReference> ItemRefs;
+	local AbilityWeaponCategory MandatoryAbility;
+	local bool bFoundItems;
+	local AbilitySetupData NewAbility;
+	local X2AbilityTemplateManager AbilityTemplateManager;
+	local X2AbilityTemplate AbilityTemplate;
+
+	if (IsModInstalled('XCOM2RPGOverhaul'))
+	{
+		return;
+	}
 
 	if (!UnitState.IsSoldier())
 		return;
+
+	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+
+	foreach default.MandatoryAbilities(MandatoryAbility)
+	{
+		bFoundItems = false;
+
+		foreach MandatoryAbility.WeaponCategories(WeaponCategory)
+		{
+			FoundItems = GetInventoryItemsForCategory(UnitState, WeaponCategory, StartState);
+			if (FoundItems.Length > 0)
+			{
+				bFoundItems = true;
+				break;
+			}
+		}
+
+		if (bFoundItems)
+		{
+			if (!UnitState.HasAbilityFromAnySource(MandatoryAbility.AbilityName))
+			{
+				AbilityTemplate = AbilityTemplateManager.FindAbilityTemplate(MandatoryAbility.AbilityName);
+				if(AbilityTemplate != none &&
+					(!AbilityTemplate.bUniqueSource || SetupData.Find('TemplateName', AbilityTemplate.DataName) == INDEX_NONE) &&
+					AbilityTemplate.ConditionsEverValidForUnit(UnitState, false)
+				)
+				{
+					NewAbility.TemplateName = AbilityTemplate.DataName;
+					NewAbility.Template = AbilityTemplate;
+					SetupData.AddItem(NewAbility);
+					`LOG(GetFuncName() @ UnitState.SummaryString() @ "Adding mandatory ability" @ NewAbility.TemplateName,, 'AbilityToSlotReassignment');
+				}
+			}
+		}
+	}
 
 	for(Index = SetupData.Length - 1; Index >= 0; Index--)
 	{
@@ -81,7 +127,18 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 				}
 			}
 
-			if (SetupData[Index].SourceWeaponRef.ObjectID > 0)
+			// havent found any items for ability, lets remove it
+			if (SetupData[Index].SourceWeaponRef.ObjectID == 0)
+			{
+				//SetupData[Index].Template.AbilityTargetConditions.AddItem(new class'X2ConditionDisabled');
+				`LOG(GetFuncName() @ UnitState.SummaryString() @
+					"Removing" @ SetupData[Index].TemplateName @
+					"cause no matching items found"
+				,, 'AbilityToSlotReassignment');
+
+				SetupData.Remove(Index, 1);
+			}
+			else
 			{
 				InventoryItem = XComGameState_Item(`XCOMHISTORY.GetGameStateForObjectID(SetupData[Index].SourceWeaponRef.ObjectID));
 
@@ -159,3 +216,10 @@ public static function array<XComGameState_Item> GetInventoryItemsForCategory(
 	return FoundItems;
 }
 
+static function bool IsModInstalled(coerce string DLCIdentifer)
+{
+	local array<string> Mods;
+  
+	Mods = class'Helpers'.static.GetInstalledModNames();
+	return Mods.Find(DLCIdentifer) != INDEX_NONE;
+}
