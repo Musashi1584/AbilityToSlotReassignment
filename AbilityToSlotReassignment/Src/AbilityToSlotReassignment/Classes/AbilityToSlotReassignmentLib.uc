@@ -24,9 +24,11 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local array<StateObjectReference> ItemRefs;
 	local AbilityWeaponCategory MandatoryAbility;
 	local bool bFoundItems;
-	local AbilitySetupData NewAbility;
+	local array<AbilitySetupData> DataToAdd;
+	local AbilitySetupData NewAbility, EmptySetup;
 	local X2AbilityTemplateManager AbilityTemplateManager;
 	local X2AbilityTemplate AbilityTemplate;
+	local array<XComGameState_Item> CurrentInventory;
 
 	if (IsModInstalled('XCOM2RPGOverhaul'))
 	{
@@ -37,6 +39,7 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 		return;
 
 	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	CurrentInventory = UnitState.GetAllInventoryItems(StartState);
 
 	foreach default.MandatoryAbilities(MandatoryAbility)
 	{
@@ -149,6 +152,38 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 				,, 'AbilityToSlotReassignment');
 			}
 		}
+
+		// Do this here again because the launch grenade ability is now on the grenade lanucher itself and not in earned soldier abilities
+		if (SetupData[Index].Template.bUseLaunchedGrenadeEffects)
+		{
+			NewAbility = EmptySetup;
+			NewAbility.TemplateName = SetupData[Index].TemplateName;
+			NewAbility.Template = SetupData[Index].Template;
+			NewAbility.SourceWeaponRef = SetupData[Index].SourceWeaponRef;
+
+			// Remove the original ability
+			SetupData.Remove(Index, 1);
+
+			//  populate a version of the ability for every grenade in the inventory
+			foreach CurrentInventory(InventoryItem)
+			{
+				if (InventoryItem.bMergedOut) 
+					continue;
+
+				if (X2GrenadeTemplate(InventoryItem.GetMyTemplate()) != none)
+				{ 
+					NewAbility.SourceAmmoRef = InventoryItem.GetReference();
+					DataToAdd.AddItem(NewAbility);
+					`LOG(GetFuncName()  @ UnitState.GetFullName() @ "Patching" @ NewAbility.TemplateName @ "Setting SourceAmmoRef" @ InventoryItem.GetMyTemplateName() @ NewAbility.SourceAmmoRef.ObjectID,, 'AbilityToSlotReassignment');
+				}
+			}
+		}
+	}
+
+
+	foreach DataToAdd(NewAbility)
+	{
+		SetupData.AddItem(NewAbility);
 	}
 }
 
