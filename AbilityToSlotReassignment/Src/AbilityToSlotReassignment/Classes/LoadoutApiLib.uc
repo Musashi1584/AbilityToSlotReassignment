@@ -300,5 +300,5 @@ static function bool IsPistolWeaponTemplate(X2WeaponTemplate WeaponTemplate)
 static function bool IsMainWeaponTemplate(X2WeaponTemplate WeaponTemplate)
 {
 	return WeaponTemplate != none &&
-		default.MainWeaponCategories.Find(WeaponTemplate.DataName) != INDEX_NONE;
+		default.MainWeaponCategories.Find(WeaponTemplate.WeaponCat) != INDEX_NONE;
 }
