@@ -8,6 +8,9 @@
     <AssemblyName>AbilityToSlotReassignment</AssemblyName>
     <RootNamespace>AbilityToSlotReassignment</RootNamespace>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+    <OutputPath>bin\Debug\</OutputPath>
+  </PropertyGroup>
   <ItemGroup>
     <Folder Include="Config\" />
     <Folder Include="Content\" />

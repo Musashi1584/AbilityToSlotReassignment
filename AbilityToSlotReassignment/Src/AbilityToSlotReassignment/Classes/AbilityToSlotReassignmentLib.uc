@@ -11,13 +11,19 @@ struct AbilityWeaponCategory
 	var array<name> WeaponCategories;
 };
 
+struct AbilityOverride
+{
+	var name OverrideAbility;
+	var array<name> OverriddenAbilities;
+};
+
 var config array<AbilityWeaponCategory> AbilityWeaponCategories;
 var config array<AbilityWeaponCategory> MandatoryAbilities;
 
 static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out array<AbilitySetupData> SetupData, optional XComGameState StartState, optional XComGameState_Player PlayerState, optional bool bMultiplayerDisplay)
 {
-	local int Index, ConfigIndex;
-	local name WeaponCategory;
+	local int Index, ConfigIndex, OverrideAbilityIndex;
+	local name WeaponCategory, OverrideAbility;
 	local array<XComGameState_Item> FoundItems;
 	local XComGameState_Item InventoryItem;
 	local StateObjectReference ItemRef;
@@ -28,12 +34,11 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local AbilitySetupData NewAbility, EmptySetup;
 	local X2AbilityTemplateManager AbilityTemplateManager;
 	local X2AbilityTemplate AbilityTemplate;
+	local X2DataTemplate DataTemplate;
 	local array<XComGameState_Item> CurrentInventory;
-
-	if (IsModInstalled('XCOM2RPGOverhaul'))
-	{
-		return;
-	}
+	local array<AbilityOverride> AbilityOverrides;
+	local AbilityOverride NewAbilityOverride, EmptyAbilityOverride;
+	local bool bSkipMandatoryAbility;
 
 	if (!UnitState.IsSoldier())
 		return;
@@ -41,8 +46,73 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	AbilityTemplateManager = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
 	CurrentInventory = UnitState.GetAllInventoryItems(StartState);
 
+	// Collect all overriden abilities
+	foreach AbilityTemplateManager.IterateTemplates(DataTemplate)
+	{
+		AbilityTemplate = X2AbilityTemplate(DataTemplate);
+		if (AbilityTemplate != none && AbilityTemplate.OverrideAbilities.Length > 0)
+		{
+			`LOG(GetFuncName() @ UnitState.SummaryString() @ "Override Ability" @ AbilityTemplate.DataName,, 'AbilityToSlotReassignment');
+
+			if (SetupData.Find('TemplateName', AbilityTemplate.DataName) == INDEX_NONE)
+			{
+				continue;
+			}
+
+			`LOG(GetFuncName() @ UnitState.SummaryString() @
+				"   -> Override Ability" @ AbilityTemplate.DataName @
+				"found on soldier",,
+			'AbilityToSlotReassignment');	
+
+			foreach AbilityTemplate.OverrideAbilities(OverrideAbility)
+			{
+				`LOG(GetFuncName() @ UnitState.SummaryString() @
+					"      ->Adding overriden Ability" @ OverrideAbility @
+					"for override" @ AbilityTemplate.DataName
+				,, 'AbilityToSlotReassignment');
+
+				OverrideAbilityIndex = AbilityOverrides.Find('OverrideAbility', AbilityTemplate.DataName);
+				if (OverrideAbilityIndex == INDEX_NONE)
+				{
+					NewAbilityOverride = EmptyAbilityOverride;
+					NewAbilityOverride.OverrideAbility = AbilityTemplate.DataName;
+					NewAbilityOverride.OverriddenAbilities.AddItem(OverrideAbility);
+					AbilityOverrides.AddItem(NewAbilityOverride);
+				}
+				else
+				{
+					if (AbilityOverrides[OverrideAbilityIndex].OverriddenAbilities.Find(OverrideAbility) == INDEX_NONE)
+					{
+						AbilityOverrides[OverrideAbilityIndex].OverriddenAbilities.AddItem(OverrideAbility);
+					}
+				}
+			}
+		}
+	}
+
 	foreach default.MandatoryAbilities(MandatoryAbility)
 	{
+		bSkipMandatoryAbility = false;
+
+		foreach AbilityOverrides(NewAbilityOverride)
+		{
+			if (NewAbilityOverride.OverriddenAbilities.Find(MandatoryAbility.AbilityName) != INDEX_NONE)
+			{
+				`LOG(GetFuncName() @ UnitState.SummaryString() @
+					"Skippinng mandatory ability" @ MandatoryAbility.AbilityName @
+					"because override ability" @ NewAbilityOverride.OverrideAbility @
+					"is present"
+				,, 'AbilityToSlotReassignment');
+				bSkipMandatoryAbility = true;
+				break;
+			}
+		}
+
+		if (bSkipMandatoryAbility)
+		{
+			continue;
+		}
+
 		bFoundItems = false;
 
 		foreach MandatoryAbility.WeaponCategories(WeaponCategory)
@@ -74,10 +144,41 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 		}
 	}
 
+	if (IsModInstalled('XCOM2RPGOverhaul'))
+	{
+		return;
+	}
+
 	for(Index = SetupData.Length - 1; Index >= 0; Index--)
 	{
 		ConfigIndex = default.AbilityWeaponCategories.Find('AbilityName', SetupData[Index].TemplateName);
 		
+		if (ConfigIndex == INDEX_NONE)
+		{
+			foreach AbilityOverrides(NewAbilityOverride)
+			{
+				if (NewAbilityOverride.OverrideAbility == SetupData[Index].TemplateName)
+				{
+					foreach NewAbilityOverride.OverriddenAbilities(OverrideAbility)
+					{
+						ConfigIndex = default.AbilityWeaponCategories.Find('AbilityName', OverrideAbility);
+						if (ConfigIndex != INDEX_NONE)
+						{
+							`LOG(GetFuncName() @ UnitState.SummaryString() @
+								"No config for" @ SetupData[Index].TemplateName @ "found." @
+								"Using config for override ability" @ OverrideAbility @ "instead"
+							,, 'AbilityToSlotReassignment');
+							break;
+						}
+					}
+				}
+				if (ConfigIndex != INDEX_NONE)
+				{
+					break;
+				}
+			}
+		}
+
 		if (ConfigIndex != INDEX_NONE)
 		{
 			// Reset ref
@@ -133,7 +234,6 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 			// havent found any items for ability, lets remove it
 			if (SetupData[Index].SourceWeaponRef.ObjectID == 0)
 			{
-				//SetupData[Index].Template.AbilityTargetConditions.AddItem(new class'X2ConditionDisabled');
 				`LOG(GetFuncName() @ UnitState.SummaryString() @
 					"Removing" @ SetupData[Index].TemplateName @
 					"cause no matching items found"
