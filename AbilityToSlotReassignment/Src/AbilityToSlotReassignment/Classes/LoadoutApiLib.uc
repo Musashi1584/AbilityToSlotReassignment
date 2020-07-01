@@ -164,8 +164,17 @@ static function bool HasSecondaryPrimaryEquipped(XComGameState_Unit UnitState, o
 	SecondaryWeapon = UnitState.GetItemInSlot(eInvSlot_SecondaryWeapon, CheckGameState);
 	if (PrimaryWeapon != none && SecondaryWeapon != none)
 	{
-
-		return IsPrimaryMainWeaponItem(PrimaryWeapon) && IsSecondaryMainWeaponItem(SecondaryWeapon);
+		return (
+			(IsPrimaryMainWeaponItem(PrimaryWeapon)
+				&& (IsSecondaryPistolItem(SecondaryWeapon) ||
+					IsSecondaryMeleeItem(SecondaryWeapon) ||
+					IsSecondaryMainWeaponItem(SecondaryWeapon)))
+			||
+			(IsSecondaryMainWeaponItem(SecondaryWeapon)
+				&& (IsPrimaryPistolItem(PrimaryWeapon) ||
+					IsPrimaryMeleeItem(PrimaryWeapon) ||
+					IsPrimaryMainWeaponItem(PrimaryWeapon)))
+			);
 	}
 
 	return false;

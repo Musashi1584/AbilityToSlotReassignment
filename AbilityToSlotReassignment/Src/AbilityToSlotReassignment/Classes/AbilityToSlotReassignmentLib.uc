@@ -5,10 +5,16 @@
 //-----------------------------------------------------------
 class AbilityToSlotReassignmentLib extends Object config (AbilityToSlotReassignment);
 
+struct WeaponCategorySet
+{
+	var name WeaponCategorySetName;
+	var array<name> WeaponCategories;
+};
+
 struct AbilityWeaponCategory
 {
 	var name AbilityName;
-	var array<name> WeaponCategories;
+	var name WeaponCategorySetName;
 };
 
 struct AbilityOverride
@@ -17,6 +23,7 @@ struct AbilityOverride
 	var array<name> OverriddenAbilities;
 };
 
+var config array<WeaponCategorySet> WeaponCategorySets;
 var config array<AbilityWeaponCategory> AbilityWeaponCategories;
 var config array<AbilityWeaponCategory> MandatoryAbilities;
 
@@ -39,6 +46,7 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	local array<AbilityOverride> AbilityOverrides;
 	local AbilityOverride NewAbilityOverride, EmptyAbilityOverride;
 	local bool bSkipMandatoryAbility;
+	local array<name> WeaponCategories;
 
 	if (!UnitState.IsSoldier())
 		return;
@@ -115,7 +123,9 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 
 		bFoundItems = false;
 
-		foreach MandatoryAbility.WeaponCategories(WeaponCategory)
+		WeaponCategories = GetWeaponCategoriesFromSet(MandatoryAbility.WeaponCategorySetName);
+
+		foreach WeaponCategories(WeaponCategory)
 		{
 			FoundItems = GetInventoryItemsForCategory(UnitState, WeaponCategory, StartState);
 			if (FoundItems.Length > 0)
@@ -184,7 +194,9 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 			// Reset ref
 			SetupData[Index].SourceWeaponRef.ObjectID = 0;
 
-			foreach default.AbilityWeaponCategories[ConfigIndex].WeaponCategories(WeaponCategory)
+			WeaponCategories = GetWeaponCategoriesFromSet(default.AbilityWeaponCategories[ConfigIndex].WeaponCategorySetName);
+
+			foreach WeaponCategories(WeaponCategory)
 			{
 				FoundItems = GetInventoryItemsForCategory(UnitState, WeaponCategory, StartState);
 
@@ -285,6 +297,21 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 	{
 		SetupData.AddItem(NewAbility);
 	}
+}
+
+public static function array<name> GetWeaponCategoriesFromSet(name WeaponCategorySetName)
+{
+	local int Index;
+	local array<name> EmptyArray;
+
+	Index = default.WeaponCategorySets.Find('WeaponCategorySetName', WeaponCategorySetName);
+	if (Index != INDEX_NONE)
+	{
+		return default.WeaponCategorySets[Index].WeaponCategories;
+	}
+
+	EmptyArray.Length = 0;
+	return EmptyArray;
 }
 
 public static function StateObjectReference GetItemReferenceForInventorySlot(array<XComGameState_Item> Items, EInventorySlot InventorySlot)
