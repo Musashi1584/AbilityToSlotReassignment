@@ -266,30 +266,30 @@ static function FinalizeUnitAbilitiesForInit(XComGameState_Unit UnitState, out a
 		}
 
 		// Do this here again because the launch grenade ability is now on the grenade lanucher itself and not in earned soldier abilities
-		if (SetupData[Index].Template.bUseLaunchedGrenadeEffects)
-		{
-			NewAbility = EmptySetup;
-			NewAbility.TemplateName = SetupData[Index].TemplateName;
-			NewAbility.Template = SetupData[Index].Template;
-			NewAbility.SourceWeaponRef = SetupData[Index].SourceWeaponRef;
-
-			// Remove the original ability
-			SetupData.Remove(Index, 1);
-
-			//  populate a version of the ability for every grenade in the inventory
-			foreach CurrentInventory(InventoryItem)
-			{
-				if (InventoryItem.bMergedOut) 
-					continue;
-
-				if (X2GrenadeTemplate(InventoryItem.GetMyTemplate()) != none)
-				{ 
-					NewAbility.SourceAmmoRef = InventoryItem.GetReference();
-					DataToAdd.AddItem(NewAbility);
-					`LOG(GetFuncName()  @ UnitState.GetFullName() @ "Patching" @ NewAbility.TemplateName @ "Setting SourceAmmoRef" @ InventoryItem.GetMyTemplateName() @ NewAbility.SourceAmmoRef.ObjectID,, 'AbilityToSlotReassignment');
-				}
-			}
-		}
+		//if (SetupData[Index].Template.bUseLaunchedGrenadeEffects)
+		//{
+		//	NewAbility = EmptySetup;
+		//	NewAbility.TemplateName = SetupData[Index].TemplateName;
+		//	NewAbility.Template = SetupData[Index].Template;
+		//	NewAbility.SourceWeaponRef = SetupData[Index].SourceWeaponRef;
+		//
+		//	// Remove the original ability
+		//	SetupData.Remove(Index, 1);
+		//
+		//	//  populate a version of the ability for every grenade in the inventory
+		//	foreach CurrentInventory(InventoryItem)
+		//	{
+		//		if (InventoryItem.bMergedOut) 
+		//			continue;
+		//
+		//		if (X2GrenadeTemplate(InventoryItem.GetMyTemplate()) != none)
+		//		{ 
+		//			NewAbility.SourceAmmoRef = InventoryItem.GetReference();
+		//			DataToAdd.AddItem(NewAbility);
+		//			`LOG(GetFuncName()  @ UnitState.GetFullName() @ "Patching" @ NewAbility.TemplateName @ "Setting SourceAmmoRef" @ InventoryItem.GetMyTemplateName() @ NewAbility.SourceAmmoRef.ObjectID,, 'AbilityToSlotReassignment');
+		//		}
+		//	}
+		//}
 	}
 
 

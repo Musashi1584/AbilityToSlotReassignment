@@ -37,7 +37,19 @@
     <Content Include="Src\AbilityToSlotReassignment\Classes\AbilityToSlotReassignmentLib.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\AbilityToSlotReassignment\Classes\Helper.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\AbilityToSlotReassignment\Classes\LoadoutApiLib.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\AbilityToSlotReassignment\Classes\UIDebugItems_ASR.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\AbilityToSlotReassignment\Classes\UITacticalQuickLaunch_UnitAbilities_ASR.uc">
+      <SubType>Content</SubType>
+    </Content>
+    <Content Include="Src\AbilityToSlotReassignment\Classes\UITacticalQuickLaunch_UnitSlot_ASR.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\AbilityToSlotReassignment\Classes\X2DownloadableContentInfo_AbilityToSlotReassignment.uc" />
